@@ -6,6 +6,7 @@ from limbo100k.agents.adaptive_risk_agent import AdaptiveRiskAgent
 from limbo100k.agents.fixed_bet_agent import FixedBetAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.engine.limbo_engine import LimboEngine
+from limbo100k.policy.session_policy import SessionPolicy
 from limbo100k.provably_fair import ProvablyFairRng
 
 
@@ -19,6 +20,7 @@ class SessionSummary:
     total_rounds: int
     reached_target: bool
     depleted: bool
+    stop_reason: str
     history: list[dict]
 
 
@@ -62,6 +64,8 @@ def run_strategy_session(
 ) -> SessionSummary:
     rng = ProvablyFairRng(server_seed=server_seed, client_seed=client_seed)
     engine = LimboEngine(rng=rng, house_edge=house_edge)
+    policy = SessionPolicy()
+
     agent = build_agent(
         strategy=strategy,
         stake=stake,
@@ -74,14 +78,28 @@ def run_strategy_session(
     lowest_capital = capital
     positive_rounds = 0
     negative_rounds = 0
+    negative_sequence = 0
+    stop_reason = "max_rounds"
     history: list[dict] = []
 
     for round_number in range(1, max_rounds + 1):
+        should_stop, reason = policy.evaluate(
+            initial_capital=initial_capital,
+            current_capital=capital,
+            peak_capital=peak_capital,
+            negative_sequence=negative_sequence,
+        )
+
+        if should_stop:
+            stop_reason = reason
+            break
+
         if capital <= 0 or capital >= target_capital:
             break
 
         exposure, selected_multiplier = agent.next_bet(capital)
         if exposure <= 0:
+            stop_reason = "no_exposure"
             break
 
         result = engine.play(stake=exposure, target_multiplier=selected_multiplier)
@@ -94,8 +112,10 @@ def run_strategy_session(
 
         if result.won:
             positive_rounds += 1
+            negative_sequence = 0
         else:
             negative_rounds += 1
+            negative_sequence += 1
 
         history.append(
             {
@@ -108,6 +128,7 @@ def run_strategy_session(
                 "outcome": "success" if result.won else "failure",
                 "profit": round(result.profit, 2),
                 "capital": round(capital, 2),
+                "negative_sequence": negative_sequence,
                 "drawdown_from_peak": round(peak_capital - capital, 2),
                 "server_seed_hash": result.proof.server_seed_hash,
                 "digest": result.proof.digest,
@@ -123,6 +144,7 @@ def run_strategy_session(
         total_rounds=positive_rounds + negative_rounds,
         reached_target=capital >= target_capital,
         depleted=capital <= 0,
+        stop_reason=stop_reason,
         history=history,
     )
 
