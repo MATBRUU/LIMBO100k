@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from limbo100k.analytics.monte_carlo import run_monte_carlo
-from limbo100k.session_runner import run_fixed_strategy_session
+from limbo100k.session_runner import run_strategy_session
 
 
 st.set_page_config(page_title="LIMBO100k Dashboard", layout="wide")
@@ -10,6 +10,10 @@ st.set_page_config(page_title="LIMBO100k Dashboard", layout="wide")
 st.title("LIMBO100k — Provably Fair Simulation")
 st.caption("Deterministic fictional environment for bankroll and risk simulations.")
 
+strategy = st.sidebar.selectbox(
+    "Strategy",
+    ["fixed", "percentage", "adaptive"],
+)
 
 initial_capital = st.sidebar.number_input(
     "Initial capital",
@@ -26,10 +30,17 @@ target_capital = st.sidebar.number_input(
 )
 
 stake = st.sidebar.number_input(
-    "Stake per round",
+    "Fixed stake",
     min_value=0.1,
     value=1.0,
     step=0.5,
+)
+
+risk_fraction = st.sidebar.slider(
+    "Risk fraction",
+    min_value=0.005,
+    max_value=0.2,
+    value=0.02,
 )
 
 multiplier = st.sidebar.slider(
@@ -67,11 +78,13 @@ mc_sessions = st.sidebar.slider(
 tab_single, tab_monte_carlo = st.tabs(["Single session", "Monte-Carlo"])
 
 with tab_single:
-    summary = run_fixed_strategy_session(
+    summary = run_strategy_session(
+        strategy=strategy,
         initial_capital=initial_capital,
         target_capital=target_capital,
         stake=stake,
         target_multiplier=multiplier,
+        risk_fraction=risk_fraction,
         max_rounds=rounds,
         server_seed=server_seed,
         client_seed=client_seed,
@@ -89,6 +102,9 @@ with tab_single:
     if not df.empty:
         st.subheader("Capital evolution")
         st.line_chart(df.set_index("round")["capital"])
+
+        st.subheader("Drawdown evolution")
+        st.line_chart(df.set_index("round")["drawdown_from_peak"])
 
         st.subheader("Round history")
         st.dataframe(df, use_container_width=True)
