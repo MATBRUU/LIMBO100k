@@ -8,7 +8,7 @@ from limbo100k.analytics.monte_carlo import run_monte_carlo
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run autonomous LIMBO100k simulations")
 
-    parser.add_argument("--strategy", default="adaptive", choices=["fixed", "percentage", "adaptive", "dynamic"])
+    parser.add_argument("--strategy", default="adaptive", choices=["fixed", "percentage", "adaptive", "dynamic", "convex"])
     parser.add_argument("--sessions", type=int, default=1000)
     parser.add_argument("--initial-capital", type=float, default=50.0)
     parser.add_argument("--target-capital", type=float, default=100000.0)
