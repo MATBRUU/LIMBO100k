@@ -7,6 +7,7 @@ from limbo100k.agents.convex_agent import ConvexAgent
 from limbo100k.agents.dynamic_decision_agent import DynamicDecisionAgent
 from limbo100k.agents.fixed_bet_agent import FixedBetAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
+from limbo100k.agents.phase_agent import PhaseAgent
 from limbo100k.engine.limbo_engine import LimboEngine
 from limbo100k.policy.session_policy import SessionPolicy
 from limbo100k.provably_fair import ProvablyFairRng
@@ -26,43 +27,19 @@ class SessionSummary:
     history: list[dict]
 
 
-def build_agent(
-    strategy: str,
-    stake: float,
-    target_multiplier: float,
-    risk_fraction: float,
-):
+def build_agent(strategy: str, stake: float, target_multiplier: float, risk_fraction: float):
     if strategy == "fixed":
         return FixedBetAgent(bet_size=stake, target_multiplier=target_multiplier)
-
     if strategy == "percentage":
-        return PercentageRiskAgent(
-            risk_fraction=risk_fraction,
-            target_multiplier=target_multiplier,
-            minimum_stake=0.1,
-        )
-
+        return PercentageRiskAgent(risk_fraction=risk_fraction, target_multiplier=target_multiplier, minimum_stake=0.1)
     if strategy == "adaptive":
-        return AdaptiveRiskAgent(
-            base_fraction=risk_fraction,
-            target_multiplier=target_multiplier,
-            minimum_stake=0.1,
-        )
-
+        return AdaptiveRiskAgent(base_fraction=risk_fraction, target_multiplier=target_multiplier, minimum_stake=0.1)
     if strategy == "dynamic":
-        return DynamicDecisionAgent(
-            base_fraction=risk_fraction,
-            base_multiplier=target_multiplier,
-            minimum_stake=0.1,
-        )
-
+        return DynamicDecisionAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     if strategy == "convex":
-        return ConvexAgent(
-            base_fraction=risk_fraction,
-            base_multiplier=target_multiplier,
-            minimum_stake=0.1,
-        )
-
+        return ConvexAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+    if strategy == "phase":
+        return PhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     raise ValueError(f"Unknown strategy: {strategy}")
 
 
@@ -82,12 +59,7 @@ def run_strategy_session(
     engine = LimboEngine(rng=rng, house_edge=house_edge)
     policy = SessionPolicy()
 
-    agent = build_agent(
-        strategy=strategy,
-        stake=stake,
-        target_multiplier=target_multiplier,
-        risk_fraction=risk_fraction,
-    )
+    agent = build_agent(strategy, stake, target_multiplier, risk_fraction)
 
     capital = initial_capital
     peak_capital = capital
@@ -105,51 +77,42 @@ def run_strategy_session(
             peak_capital=peak_capital,
             negative_sequence=negative_sequence,
         )
-
         if should_stop:
             stop_reason = reason
             break
-
         if capital <= 0 or capital >= target_capital:
             break
-
         exposure, selected_multiplier = agent.next_bet(capital)
         if exposure <= 0:
             stop_reason = "no_exposure"
             break
-
         result = engine.play(stake=exposure, target_multiplier=selected_multiplier)
         capital += result.profit
         peak_capital = max(peak_capital, capital)
         lowest_capital = min(lowest_capital, capital)
-
         if hasattr(agent, "observe"):
             agent.observe(result.won, capital)
-
         if result.won:
             positive_rounds += 1
             negative_sequence = 0
         else:
             negative_rounds += 1
             negative_sequence += 1
-
-        history.append(
-            {
-                "round": round_number,
-                "strategy": strategy,
-                "nonce": result.nonce,
-                "stake": round(exposure, 2),
-                "target_multiplier": round(result.target_multiplier, 4),
-                "rolled_multiplier": round(result.rolled_multiplier, 4),
-                "outcome": "success" if result.won else "failure",
-                "profit": round(result.profit, 2),
-                "capital": round(capital, 2),
-                "negative_sequence": negative_sequence,
-                "drawdown_from_peak": round(peak_capital - capital, 2),
-                "server_seed_hash": result.proof.server_seed_hash,
-                "digest": result.proof.digest,
-            }
-        )
+        history.append({
+            "round": round_number,
+            "strategy": strategy,
+            "nonce": result.nonce,
+            "stake": round(exposure, 2),
+            "target_multiplier": round(result.target_multiplier, 4),
+            "rolled_multiplier": round(result.rolled_multiplier, 4),
+            "outcome": "success" if result.won else "failure",
+            "profit": round(result.profit, 2),
+            "capital": round(capital, 2),
+            "negative_sequence": negative_sequence,
+            "drawdown_from_peak": round(peak_capital - capital, 2),
+            "server_seed_hash": result.proof.server_seed_hash,
+            "digest": result.proof.digest,
+        })
 
     return SessionSummary(
         final_capital=round(capital, 2),
