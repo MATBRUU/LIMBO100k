@@ -8,7 +8,10 @@ version = "0.1.0"
 description = "Fictional Limbo simulator for bankroll and risk-management experiments."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "pandas>=2.2.0",
+  "streamlit>=1.35.0",
+]
 
 [project.optional-dependencies]
 dev = [
