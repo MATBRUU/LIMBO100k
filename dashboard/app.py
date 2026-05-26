@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+from limbo100k.analytics.monte_carlo import run_monte_carlo
 from limbo100k.session_runner import run_fixed_strategy_session
 
 
@@ -55,35 +56,70 @@ client_seed = st.sidebar.text_input(
     value="Mathis",
 )
 
-
-summary = run_fixed_strategy_session(
-    initial_capital=initial_capital,
-    target_capital=target_capital,
-    stake=stake,
-    target_multiplier=multiplier,
-    max_rounds=rounds,
-    server_seed=server_seed,
-    client_seed=client_seed,
+mc_sessions = st.sidebar.slider(
+    "Monte-Carlo sessions",
+    min_value=10,
+    max_value=2000,
+    value=250,
 )
 
 
-df = pd.DataFrame(summary.history)
+tab_single, tab_monte_carlo = st.tabs(["Single session", "Monte-Carlo"])
 
-col1, col2, col3, col4 = st.columns(4)
+with tab_single:
+    summary = run_fixed_strategy_session(
+        initial_capital=initial_capital,
+        target_capital=target_capital,
+        stake=stake,
+        target_multiplier=multiplier,
+        max_rounds=rounds,
+        server_seed=server_seed,
+        client_seed=client_seed,
+    )
 
-col1.metric("Final capital", f"{summary.final_capital} €")
-col2.metric("Peak capital", f"{summary.peak_capital} €")
-col3.metric("Positive rounds", summary.positive_rounds)
-col4.metric("Negative rounds", summary.negative_rounds)
+    df = pd.DataFrame(summary.history)
 
-if not df.empty:
-    st.subheader("Capital evolution")
-    st.line_chart(df.set_index("round")["capital"])
+    col1, col2, col3, col4 = st.columns(4)
 
-    st.subheader("Round history")
-    st.dataframe(df, use_container_width=True)
+    col1.metric("Final capital", f"{summary.final_capital} €")
+    col2.metric("Peak capital", f"{summary.peak_capital} €")
+    col3.metric("Positive rounds", summary.positive_rounds)
+    col4.metric("Negative rounds", summary.negative_rounds)
 
-    st.subheader("Provably Fair commitment")
-    st.code(df.iloc[0]["server_seed_hash"])
-else:
-    st.warning("No rounds were executed.")
+    if not df.empty:
+        st.subheader("Capital evolution")
+        st.line_chart(df.set_index("round")["capital"])
+
+        st.subheader("Round history")
+        st.dataframe(df, use_container_width=True)
+
+        st.subheader("Provably Fair commitment")
+        st.code(df.iloc[0]["server_seed_hash"])
+    else:
+        st.warning("No rounds were executed.")
+
+with tab_monte_carlo:
+    report = run_monte_carlo(
+        sessions=mc_sessions,
+        initial_capital=initial_capital,
+        target_capital=target_capital,
+        stake=stake,
+        target_multiplier=multiplier,
+        max_rounds=rounds,
+    )
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Average final capital", f"{report.average_final_capital} €")
+    col2.metric("Median final capital", f"{report.median_final_capital} €")
+    col3.metric("Sessions", report.sessions)
+
+    col4, col5, col6, col7 = st.columns(4)
+    col4.metric("Success rate", f"{report.success_rate} %")
+    col5.metric("Depletion rate", f"{report.depletion_rate} %")
+    col6.metric("Best session", f"{report.best_session} €")
+    col7.metric("Worst session", f"{report.worst_session} €")
+
+    st.info(
+        "Monte-Carlo uses different deterministic seed pairs per session. "
+        "It is designed to evaluate risk, not to predict future outcomes."
+    )
