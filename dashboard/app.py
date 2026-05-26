@@ -1,13 +1,13 @@
-import random
-
 import pandas as pd
 import streamlit as st
+
+from limbo100k.session_runner import run_fixed_strategy_session
 
 
 st.set_page_config(page_title="LIMBO100k Dashboard", layout="wide")
 
-st.title("LIMBO100k — Simulation Dashboard")
-st.caption("Fictional probabilistic environment for bankroll and risk simulations.")
+st.title("LIMBO100k — Provably Fair Simulation")
+st.caption("Deterministic fictional environment for bankroll and risk simulations.")
 
 
 initial_capital = st.sidebar.number_input(
@@ -17,49 +17,73 @@ initial_capital = st.sidebar.number_input(
     step=10.0,
 )
 
-iterations = st.sidebar.slider(
-    "Iterations",
-    min_value=10,
-    max_value=500,
-    value=100,
+target_capital = st.sidebar.number_input(
+    "Target capital",
+    min_value=10.0,
+    value=1000.0,
+    step=50.0,
 )
 
-volatility = st.sidebar.slider(
-    "Volatility",
+stake = st.sidebar.number_input(
+    "Stake per round",
     min_value=0.1,
-    max_value=5.0,
     value=1.0,
+    step=0.5,
+)
+
+multiplier = st.sidebar.slider(
+    "Target multiplier",
+    min_value=1.1,
+    max_value=100.0,
+    value=2.0,
+)
+
+rounds = st.sidebar.slider(
+    "Maximum rounds",
+    min_value=10,
+    max_value=5000,
+    value=250,
+)
+
+server_seed = st.sidebar.text_input(
+    "Server seed",
+    value="LIMBO100k_SERVER",
+)
+
+client_seed = st.sidebar.text_input(
+    "Client seed",
+    value="Mathis",
 )
 
 
-capital = initial_capital
-history = []
-
-for step in range(iterations):
-    variation = random.uniform(-1, 1) * volatility
-    capital += variation
-    capital = max(capital, 0)
-
-    history.append(
-        {
-            "iteration": step + 1,
-            "capital": round(capital, 2),
-            "variation": round(variation, 2),
-            "status": "positive" if variation >= 0 else "negative",
-        }
-    )
+summary = run_fixed_strategy_session(
+    initial_capital=initial_capital,
+    target_capital=target_capital,
+    stake=stake,
+    target_multiplier=multiplier,
+    max_rounds=rounds,
+    server_seed=server_seed,
+    client_seed=client_seed,
+)
 
 
-df = pd.DataFrame(history)
+df = pd.DataFrame(summary.history)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Final capital", f"{round(capital, 2)} €")
-col2.metric("Positive outcomes", int((df['status'] == 'positive').sum()))
-col3.metric("Negative outcomes", int((df['status'] == 'negative').sum()))
+col1.metric("Final capital", f"{summary.final_capital} €")
+col2.metric("Peak capital", f"{summary.peak_capital} €")
+col3.metric("Positive rounds", summary.positive_rounds)
+col4.metric("Negative rounds", summary.negative_rounds)
 
-st.subheader("Capital evolution")
-st.line_chart(df.set_index("iteration")["capital"])
+if not df.empty:
+    st.subheader("Capital evolution")
+    st.line_chart(df.set_index("round")["capital"])
 
-st.subheader("Iteration history")
-st.dataframe(df, use_container_width=True)
+    st.subheader("Round history")
+    st.dataframe(df, use_container_width=True)
+
+    st.subheader("Provably Fair commitment")
+    st.code(df.iloc[0]["server_seed_hash"])
+else:
+    st.warning("No rounds were executed.")
