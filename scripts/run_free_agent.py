@@ -63,7 +63,7 @@ def main() -> None:
     parser.add_argument(
         "--strategy",
         default="convex",
-        choices=["fixed", "percentage", "adaptive", "dynamic", "convex"],
+        choices=["fixed", "percentage", "adaptive", "dynamic", "convex","phase"],
     )
 
     parser.add_argument("--sessions", type=int, default=1000)
