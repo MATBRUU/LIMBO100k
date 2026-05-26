@@ -17,11 +17,15 @@ def run_one_session(
     fraction: float,
     rounds: int,
     session_index: int,
+    seed_offset: int,
 ) -> tuple[float, int, str]:
+    real_index = session_index + seed_offset
+
     rng = ProvablyFairRng(
-        server_seed=f"FREE_SERVER_{strategy}_{session_index}",
-        client_seed=f"FREE_CLIENT_{strategy}_{session_index}",
+        server_seed=f"FREE_SERVER_{strategy}_{real_index}",
+        client_seed=f"FREE_CLIENT_{strategy}_{real_index}",
     )
+
     engine = LimboEngine(rng=rng)
     agent = build_agent(strategy, stake, multiplier, fraction)
 
@@ -55,7 +59,13 @@ def run_one_session(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run LIMBO100k free-form batches")
-    parser.add_argument("--strategy", default="convex", choices=["fixed", "percentage", "adaptive", "dynamic", "convex"])
+
+    parser.add_argument(
+        "--strategy",
+        default="convex",
+        choices=["fixed", "percentage", "adaptive", "dynamic", "convex"],
+    )
+
     parser.add_argument("--sessions", type=int, default=1000)
     parser.add_argument("--initial-capital", type=float, default=50.0)
     parser.add_argument("--target-capital", type=float, default=100000.0)
@@ -63,6 +73,8 @@ def main() -> None:
     parser.add_argument("--multiplier", type=float, default=3.0)
     parser.add_argument("--risk-fraction", type=float, default=0.04)
     parser.add_argument("--rounds", type=int, default=5000)
+    parser.add_argument("--seed-offset", type=int, default=0)
+
     args = parser.parse_args()
 
     final_values = []
@@ -83,6 +95,7 @@ def main() -> None:
             fraction=args.risk_fraction,
             rounds=args.rounds,
             session_index=index,
+            seed_offset=args.seed_offset,
         )
 
         final_values.append(final_capital)
@@ -96,7 +109,7 @@ def main() -> None:
 
         if final_capital > best_value:
             best_value = final_capital
-            best_index = index
+            best_index = index + args.seed_offset
 
         if final_capital < worst_value:
             worst_value = final_capital
@@ -104,6 +117,7 @@ def main() -> None:
     print("\n=== LIMBO100k Free Agent Batch ===")
     print(f"Strategy: {args.strategy}")
     print(f"Sessions: {args.sessions}")
+    print(f"Seed offset: {args.seed_offset}")
     print(f"Average final capital: {round(mean(final_values), 2)} €")
     print(f"Median final capital: {round(median(final_values), 2)} €")
     print(f"Objective rate: {round((objective_count / args.sessions) * 100, 4)} %")
