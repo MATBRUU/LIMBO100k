@@ -5,7 +5,7 @@ import csv
 from pathlib import Path
 from statistics import mean, median
 
-from scripts.run_free_agent import run_one_session
+from run_free_agent import run_one_session
 
 
 def frange(start: float, stop: float, step: float) -> list[float]:
