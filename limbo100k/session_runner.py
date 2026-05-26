@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from limbo100k.agents.adaptive_risk_agent import AdaptiveRiskAgent
+from limbo100k.agents.convex_agent import ConvexAgent
 from limbo100k.agents.dynamic_decision_agent import DynamicDecisionAgent
 from limbo100k.agents.fixed_bet_agent import FixedBetAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
@@ -50,6 +51,13 @@ def build_agent(
 
     if strategy == "dynamic":
         return DynamicDecisionAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
+    if strategy == "convex":
+        return ConvexAgent(
             base_fraction=risk_fraction,
             base_multiplier=target_multiplier,
             minimum_stake=0.1,
