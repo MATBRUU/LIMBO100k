@@ -76,8 +76,8 @@ def analyze_session(args: argparse.Namespace, session_index: int) -> dict:
         target_multiplier=args.multiplier,
         risk_fraction=args.risk_fraction,
         max_rounds=args.rounds,
-        server_seed=f"SERVER_{args.strategy}_{session_index}",
-        client_seed=f"CLIENT_{args.strategy}_{session_index}",
+       server_seed=f"FREE_SERVER_{args.strategy}_{session_index}",
+       client_seed=f"FREE_CLIENT_{args.strategy}_{session_index}",
     )
     history = summary.history
     return {
