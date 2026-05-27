@@ -8,7 +8,7 @@ from run_free_agent import run_one_session
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan deterministic seed ranges for high-end trajectories")
-    parser.add_argument("--strategy", default="convex", choices=["fixed", "percentage", "adaptive", "dynamic", "convex","phase","meta_phase"])
+    parser.add_argument("--strategy", default="convex", choices=["fixed", "percentage", "adaptive", "dynamic", "convex","phase","meta_phase","temporal"])
     parser.add_argument("--ranges", type=int, default=10)
     parser.add_argument("--range-size", type=int, default=10000)
     parser.add_argument("--start-offset", type=int, default=0)
