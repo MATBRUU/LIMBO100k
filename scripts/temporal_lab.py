@@ -117,7 +117,12 @@ def run_session(config: dict, session_index: int, args: argparse.Namespace) -> t
             reason = "objective_reached"
             break
         stake, target = agent.next_bet(capital)
-        result = engine.play(stake=stake, target_multiplier=target)
+
+if stake <= 0:
+    reason = "no_exposure"
+    break
+
+result = engine.play(stake=stake, target_multiplier=target)
         capital += result.profit
         agent.observe(result.won, capital)
 
