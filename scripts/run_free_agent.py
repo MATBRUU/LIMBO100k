@@ -43,6 +43,7 @@ def run_one_session(
             break
 
         amount, target = agent.next_bet(capital)
+
         if amount <= 0:
             reason = "no_amount"
             break
@@ -58,7 +59,6 @@ def run_one_session(
 
 
 def main() -> None:
-
     parser = argparse.ArgumentParser(
         description="Run autonomous LIMBO100k simulations"
     )
