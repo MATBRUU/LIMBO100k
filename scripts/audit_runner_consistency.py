@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 
-from scripts.run_free_agent import run_one_session
-from scripts.trajectory_analyzer import analyze_session
+from run_free_agent import run_one_session
+from trajectory_analyzer import analyze_session
 
 
 def main() -> None:
