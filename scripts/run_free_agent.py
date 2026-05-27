@@ -63,8 +63,17 @@ def main() -> None:
     parser.add_argument(
         "--strategy",
         default="convex",
-        choices=["fixed", "percentage", "adaptive", "dynamic", "convex","phase","meta_phase","temporal","momentum_phase"],
-    )
+     choices=[
+    "fixed",
+    "percentage",
+    "adaptive",
+    "dynamic",
+    "convex",
+    "phase",
+    "meta_phase",
+    "temporal",
+    "momentum_phase",
+]
 
     parser.add_argument("--sessions", type=int, default=1000)
     parser.add_argument("--initial-capital", type=float, default=50.0)
