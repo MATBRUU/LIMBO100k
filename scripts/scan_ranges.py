@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from statistics import mean, median
 
-from scripts.run_free_agent import run_one_session
+from run_free_agent import run_one_session
 
 
 def main() -> None:
