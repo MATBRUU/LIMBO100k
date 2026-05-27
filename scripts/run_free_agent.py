@@ -60,20 +60,21 @@ def run_one_session(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run LIMBO100k free-form batches")
 
-    parser.add_argument(
-        "--strategy",
-        default="convex",
-     choices=[
-    "fixed",
-    "percentage",
-    "adaptive",
-    "dynamic",
-    "convex",
-    "phase",
-    "meta_phase",
-    "temporal",
-    "momentum_phase",
-]
+ parser.add_argument(
+    "--strategy",
+    default="temporal",
+    choices=[
+        "fixed",
+        "percentage",
+        "adaptive",
+        "dynamic",
+        "convex",
+        "phase",
+        "meta_phase",
+        "temporal",
+        "momentum_phase",
+    ],
+)
 
     parser.add_argument("--sessions", type=int, default=1000)
     parser.add_argument("--initial-capital", type=float, default=50.0)
