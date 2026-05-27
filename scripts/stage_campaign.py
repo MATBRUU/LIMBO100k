@@ -39,12 +39,29 @@ def run_stage_attempt(
     return final_capital, reason == "objective_reached" or final_capital >= target_capital
 
 
+def apply_lock_rule(
+    current: float,
+    reserve: float,
+    reached_target: float,
+    lock_from_stage: float,
+    lock_ratio: float,
+) -> tuple[float, float, float]:
+    if reached_target < lock_from_stage or lock_ratio <= 0:
+        return current, reserve, 0.0
+
+    locked = reached_target * lock_ratio
+    next_current = reached_target - locked
+    next_reserve = reserve + locked
+    return next_current, next_reserve, locked
+
+
 def run_campaign(args: argparse.Namespace, campaign_index: int, stages: list[float]) -> dict:
     reserve = args.global_bankroll
     current = stages[0]
     stage_index = 0
     attempts = 0
     stage_hits = 0
+    locked_total = 0.0
     best_capital = current
     base_seed = args.seed_offset + campaign_index * args.max_attempts
 
@@ -69,8 +86,18 @@ def run_campaign(args: argparse.Namespace, campaign_index: int, stages: list[flo
 
         if hit:
             stage_hits += 1
-            current = min(final_capital, target)
+            reached_target = min(final_capital, target)
+            current = reached_target
             reserve += max(0.0, final_capital - target) if args.return_excess else 0.0
+
+            current, reserve, locked = apply_lock_rule(
+                current=current,
+                reserve=reserve,
+                reached_target=reached_target,
+                lock_from_stage=args.lock_from_stage,
+                lock_ratio=args.lock_ratio,
+            )
+            locked_total += locked
             stage_index += 1
         elif args.keep_residual:
             reserve += max(0.0, final_capital)
@@ -82,6 +109,7 @@ def run_campaign(args: argparse.Namespace, campaign_index: int, stages: list[flo
         "final_total": round(final_total, 2),
         "reserve": round(reserve, 2),
         "current_stage_capital": round(current, 2),
+        "locked_total": round(locked_total, 2),
         "stage_index": stage_index,
         "stage_hits": stage_hits,
         "attempts": attempts,
@@ -102,6 +130,8 @@ def main() -> None:
     parser.add_argument("--multiplier", type=float, default=5.0)
     parser.add_argument("--risk-fraction", type=float, default=0.18)
     parser.add_argument("--rounds", type=int, default=5000)
+    parser.add_argument("--lock-from-stage", type=float, default=25000.0)
+    parser.add_argument("--lock-ratio", type=float, default=0.30)
     parser.add_argument("--keep-residual", action="store_true")
     parser.add_argument("--return-excess", action="store_true")
     parser.add_argument("--export-csv", action="store_true")
@@ -117,11 +147,14 @@ def main() -> None:
             print(
                 f"Campaign {campaign_index + 1}/{args.campaigns} | "
                 f"stage={row['stage_index']}/{len(stages) - 1} | "
+                f"locked={row['locked_total']} € | "
                 f"final={row['final_total']} €"
             )
 
     finals = [row["final_total"] for row in rows]
+    locked_values = [row["locked_total"] for row in rows]
     successes = sum(1 for row in rows if row["success"])
+    locked_campaigns = sum(1 for row in rows if row["locked_total"] > 0)
     stage_depths = [row["stage_index"] for row in rows]
     best_row = max(rows, key=lambda row: row["final_total"])
 
@@ -130,8 +163,12 @@ def main() -> None:
     print(f"Campaigns: {args.campaigns}")
     print(f"Global bankroll: {args.global_bankroll} €")
     print(f"Stages: {stages}")
+    print(f"Lock from stage: {args.lock_from_stage} €")
+    print(f"Lock ratio: {args.lock_ratio}")
     print(f"Average final total: {round(mean(finals), 2)} €")
     print(f"Median final total: {round(median(finals), 2)} €")
+    print(f"Average locked total: {round(mean(locked_values), 2)} €")
+    print(f"Campaigns with locked capital: {round((locked_campaigns / args.campaigns) * 100, 6)} %")
     print(f"Success campaign rate: {round((successes / args.campaigns) * 100, 6)} %")
     print(f"Average stage depth: {round(mean(stage_depths), 2)} / {len(stages) - 1}")
     print(f"Best campaign final: {best_row['final_total']} €")
