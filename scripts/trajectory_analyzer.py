@@ -138,8 +138,27 @@ def summarize(rows: list[dict]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Analyze trajectory structures across strategy sessions")
-    parser.add_argument("--strategy", default="temporal", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase", "meta_phase", "temporal"])
+
+    parser = argparse.ArgumentParser(
+        description="Analyze trajectory structures across strategy sessions"
+    )
+
+    parser.add_argument(
+        "--strategy",
+        default="temporal",
+        choices=[
+            "fixed",
+            "percentage",
+            "adaptive",
+            "dynamic",
+            "convex",
+            "phase",
+            "meta_phase",
+            "temporal",
+            "momentum_phase",
+        ],
+    )
+
     parser.add_argument("--sessions", type=int, default=10000)
     parser.add_argument("--seed-offset", type=int, default=0)
     parser.add_argument("--initial-capital", type=float, default=50.0)
@@ -149,8 +168,8 @@ def main() -> None:
     parser.add_argument("--risk-fraction", type=float, default=0.18)
     parser.add_argument("--rounds", type=int, default=5000)
     parser.add_argument("--export-csv", action="store_true")
-    args = parser.parse_args()
 
+    args = parser.parse_args()
     rows = []
     for local_index in range(args.sessions):
         session_index = args.seed_offset + local_index
