@@ -56,7 +56,7 @@ class TemporalAgent:
         elif bankroll >= 50000:
             self.mode = "upper"
             self.fraction = min(self.fraction, 0.12)
-            self.multiplier = min(self.multiplier, 4.0)
+            self.multiplier = min(self.multiplier, 5.0)
         elif peak_ratio >= 200 and self.rounds > 250:
             self.mode = "upper_mid"
             self.fraction = min(max(self.fraction, 0.10), 0.18)
@@ -90,7 +90,7 @@ class TemporalAgent:
 
     def _down(self) -> None:
         if self.mode == "base":
-            self.fraction = max(0.10, self.fraction * 0.88)
+            self.fraction = max(0.10, self.fraction * 0.94)
             self.multiplier = max(3.0, self.multiplier * 0.86)
         elif self.mode == "late_low":
             self.fraction = max(0.08, self.fraction * 0.90)
