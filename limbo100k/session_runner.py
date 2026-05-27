@@ -13,7 +13,8 @@ from limbo100k.agents.temporal_agent import TemporalAgent
 from limbo100k.engine.limbo_engine import LimboEngine
 from limbo100k.policy.session_policy import SessionPolicy
 from limbo100k.provably_fair import ProvablyFairRng
-
+from limbo100k.agents.momentum_phase_agent import MomentumPhaseAgent
+    
 
 @dataclass
 class SessionSummary:
@@ -47,6 +48,12 @@ def build_agent(strategy: str, stake: float, target_multiplier: float, risk_frac
     if strategy == "temporal":
         return TemporalAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     raise ValueError(f"Unknown strategy: {strategy}")
+    if strategy == "momentum_phase":
+        return MomentumPhaseAgent(
+           base_fraction=risk_fraction,
+           base_multiplier=target_multiplier,
+           minimum_stake=0.1,
+    )
 
 
 def run_strategy_session(
