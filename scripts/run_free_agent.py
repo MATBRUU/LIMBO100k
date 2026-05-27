@@ -58,30 +58,33 @@ def run_one_session(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run LIMBO100k free-form batches")
 
- parser.add_argument(
-    "--strategy",
-    default="temporal",
-    choices=[
-        "fixed",
-        "percentage",
-        "adaptive",
-        "dynamic",
-        "convex",
-        "phase",
-        "meta_phase",
-        "temporal",
-        "momentum_phase",
-    ],
-)
+    parser = argparse.ArgumentParser(
+        description="Run autonomous LIMBO100k simulations"
+    )
+
+    parser.add_argument(
+        "--strategy",
+        default="temporal",
+        choices=[
+            "fixed",
+            "percentage",
+            "adaptive",
+            "dynamic",
+            "convex",
+            "phase",
+            "meta_phase",
+            "temporal",
+            "momentum_phase",
+        ],
+    )
 
     parser.add_argument("--sessions", type=int, default=1000)
     parser.add_argument("--initial-capital", type=float, default=50.0)
     parser.add_argument("--target-capital", type=float, default=100000.0)
     parser.add_argument("--stake", type=float, default=1.0)
-    parser.add_argument("--multiplier", type=float, default=3.0)
-    parser.add_argument("--risk-fraction", type=float, default=0.04)
+    parser.add_argument("--multiplier", type=float, default=5.0)
+    parser.add_argument("--risk-fraction", type=float, default=0.18)
     parser.add_argument("--rounds", type=int, default=5000)
     parser.add_argument("--seed-offset", type=int, default=0)
 
