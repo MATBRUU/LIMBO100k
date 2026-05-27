@@ -116,6 +116,7 @@ def run_session(config: dict, session_index: int, args: argparse.Namespace) -> t
         if capital >= args.target_capital:
             reason = "objective_reached"
             break
+            
         stake, target = agent.next_bet(capital)
 
 if stake <= 0:
