@@ -6,6 +6,7 @@ from limbo100k.agents.adaptive_risk_agent import AdaptiveRiskAgent
 from limbo100k.agents.convex_agent import ConvexAgent
 from limbo100k.agents.dynamic_decision_agent import DynamicDecisionAgent
 from limbo100k.agents.fixed_bet_agent import FixedBetAgent
+from limbo100k.agents.meta_phase_agent import MetaPhaseAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.agents.phase_agent import PhaseAgent
 from limbo100k.engine.limbo_engine import LimboEngine
@@ -40,6 +41,8 @@ def build_agent(strategy: str, stake: float, target_multiplier: float, risk_frac
         return ConvexAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     if strategy == "phase":
         return PhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+    if strategy == "meta_phase":
+        return MetaPhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     raise ValueError(f"Unknown strategy: {strategy}")
 
 
