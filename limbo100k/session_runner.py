@@ -31,29 +31,70 @@ class SessionSummary:
 
 
 def build_agent(strategy: str, stake: float, target_multiplier: float, risk_fraction: float):
+
     if strategy == "fixed":
-        return FixedBetAgent(bet_size=stake, target_multiplier=target_multiplier)
+        return FixedBetAgent(
+            bet_size=stake,
+            target_multiplier=target_multiplier,
+        )
+
     if strategy == "percentage":
-        return PercentageRiskAgent(risk_fraction=risk_fraction, target_multiplier=target_multiplier, minimum_stake=0.1)
+        return PercentageRiskAgent(
+            risk_fraction=risk_fraction,
+            target_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "adaptive":
-        return AdaptiveRiskAgent(base_fraction=risk_fraction, target_multiplier=target_multiplier, minimum_stake=0.1)
+        return AdaptiveRiskAgent(
+            base_fraction=risk_fraction,
+            target_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "dynamic":
-        return DynamicDecisionAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+        return DynamicDecisionAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "convex":
-        return ConvexAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+        return ConvexAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "phase":
-        return PhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+        return PhaseAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "meta_phase":
-        return MetaPhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+        return MetaPhaseAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "temporal":
-        return TemporalAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
-    raise ValueError(f"Unknown strategy: {strategy}")
+        return TemporalAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     if strategy == "momentum_phase":
         return MomentumPhaseAgent(
-           base_fraction=risk_fraction,
-           base_multiplier=target_multiplier,
-           minimum_stake=0.1,
-    )
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
+    raise ValueError(f"Unknown strategy: {strategy}")
 
 
 def run_strategy_session(
