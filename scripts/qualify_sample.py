@@ -10,7 +10,7 @@ from run_free_agent import run_one_session
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Qualify a large deterministic sample and keep the strongest subset")
-    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase","meta_phase"])
+    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase","meta_phase","temporal"])
     parser.add_argument("--source-sessions", type=int, default=200000)
     parser.add_argument("--sample-size", type=int, default=1000)
     parser.add_argument("--seed-offset", type=int, default=0)
