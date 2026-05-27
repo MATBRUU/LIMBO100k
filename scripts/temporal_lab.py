@@ -104,27 +104,37 @@ def run_session(config: dict, session_index: int, args: argparse.Namespace) -> t
         server_seed=f"LAB_SERVER_{session_index}",
         client_seed=f"LAB_CLIENT_{session_index}",
     )
+
     engine = LimboEngine(rng=rng)
+
     agent = LabTemporalAgent(**config)
+
     capital = args.initial_capital
     reason = "max_rounds"
 
     for _ in range(args.rounds):
+
         if capital <= 0:
             reason = "depleted"
             break
+
         if capital >= args.target_capital:
             reason = "objective_reached"
             break
-            
-               stake, target = agent.next_bet(capital)
+
+        stake, target = agent.next_bet(capital)
 
         if stake <= 0:
             reason = "no_exposure"
             break
 
-        result = engine.play(stake=stake, target_multiplier=target)
+        result = engine.play(
+            stake=stake,
+            target_multiplier=target,
+        )
+
         capital += result.profit
+
         agent.observe(result.won, capital)
 
     return round(capital, 2), reason
