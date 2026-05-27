@@ -76,6 +76,7 @@ def main() -> None:
             "meta_phase",
             "temporal",
             "momentum_phase",
+            "density_phase",
         ],
     )
 
