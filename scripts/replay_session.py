@@ -66,26 +66,41 @@ def replay_session(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Replay one deterministic LIMBO100k session")
-    parser.add_argument("--strategy", default="phase", choices=[
-    "fixed",
-    "percentage",
-    "adaptive",
-    "dynamic",
-    "convex",
-    "phase",
-    "meta_phase",
-    "temporal",
-    "momentum_phase",
-]
-    parser.add_argument("--session-index", type=int, required=True)
+
+    parser = argparse.ArgumentParser(
+        description="Replay a LIMBO100k session"
+    )
+
+    parser.add_argument(
+        "--strategy",
+        default="phase",
+        choices=[
+            "fixed",
+            "percentage",
+            "adaptive",
+            "dynamic",
+            "convex",
+            "phase",
+            "meta_phase",
+            "temporal",
+            "momentum_phase",
+        ],
+    )
+
+    parser.add_argument(
+        "--session-index",
+        type=int,
+        required=True,
+    )
+
     parser.add_argument("--initial-capital", type=float, default=50.0)
     parser.add_argument("--target-capital", type=float, default=100000.0)
     parser.add_argument("--stake", type=float, default=1.0)
-    parser.add_argument("--multiplier", type=float, default=4.0)
-    parser.add_argument("--risk-fraction", type=float, default=0.10)
+    parser.add_argument("--multiplier", type=float, default=5.0)
+    parser.add_argument("--risk-fraction", type=float, default=0.18)
     parser.add_argument("--rounds", type=int, default=5000)
     parser.add_argument("--export-csv", action="store_true")
+
     args = parser.parse_args()
 
     rows = replay_session(
