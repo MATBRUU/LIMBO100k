@@ -9,6 +9,7 @@ from limbo100k.agents.fixed_bet_agent import FixedBetAgent
 from limbo100k.agents.meta_phase_agent import MetaPhaseAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.agents.phase_agent import PhaseAgent
+from limbo100k.agents.temporal_agent import TemporalAgent
 from limbo100k.engine.limbo_engine import LimboEngine
 from limbo100k.policy.session_policy import SessionPolicy
 from limbo100k.provably_fair import ProvablyFairRng
@@ -43,6 +44,8 @@ def build_agent(strategy: str, stake: float, target_multiplier: float, risk_frac
         return PhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     if strategy == "meta_phase":
         return MetaPhaseAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
+    if strategy == "temporal":
+        return TemporalAgent(base_fraction=risk_fraction, base_multiplier=target_multiplier, minimum_stake=0.1)
     raise ValueError(f"Unknown strategy: {strategy}")
 
 
