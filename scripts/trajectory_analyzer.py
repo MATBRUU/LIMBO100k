@@ -142,7 +142,7 @@ def analyze_session(args: argparse.Namespace, session_index: int) -> dict:
                 "round": round_number,
                 "stake": round(amount, 2),
                 "target": round(target, 4),
-                "roll": round(result.roll, 4),
+                "roll": round(result.rolled_multiplier, 4),
                 "outcome": "success" if result.won else "failure",
                 "profit": round(result.profit, 2),
                 "capital": round(capital, 2),
