@@ -67,7 +67,7 @@ def replay_session(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay one deterministic LIMBO100k session")
-    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase"])
+    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase","meta_phase","temporal"])
     parser.add_argument("--session-index", type=int, required=True)
     parser.add_argument("--initial-capital", type=float, default=50.0)
     parser.add_argument("--target-capital", type=float, default=100000.0)
