@@ -115,7 +115,7 @@ def evaluate_setting(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Search LIMBO100k parameter grids")
-    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase"])
+    parser.add_argument("--strategy", default="phase", choices=["fixed", "percentage", "adaptive", "dynamic", "convex", "phase","meta_phase"])
     parser.add_argument("--sessions", type=int, default=2000)
     parser.add_argument("--seed-offset", type=int, default=0)
     parser.add_argument("--initial-capital", type=float, default=50.0)
