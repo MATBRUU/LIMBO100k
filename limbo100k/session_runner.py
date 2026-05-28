@@ -12,6 +12,7 @@ from limbo100k.agents.momentum_phase_agent import MomentumPhaseAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.agents.phase_agent import PhaseAgent
 from limbo100k.agents.phase_state_agent import PhaseStateAgent
+from limbo100k.agents.phase_state_v2_agent import PhaseStateV2Agent
 from limbo100k.agents.temporal_agent import TemporalAgent
 
 from limbo100k.engine.limbo_engine import LimboEngine
@@ -111,6 +112,13 @@ def build_agent(
 
     if strategy == "phase_state":
         return PhaseStateAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
+    if strategy == "phase_state_v2":
+        return PhaseStateV2Agent(
             base_fraction=risk_fraction,
             base_multiplier=target_multiplier,
             minimum_stake=0.1,
@@ -278,5 +286,7 @@ def run_strategy_session(
         reached_target=capital >= target_capital,
         depleted=capital <= 0,
         stop_reason=stop_reason,
+        history=history,
+    )
         history=history,
     )
