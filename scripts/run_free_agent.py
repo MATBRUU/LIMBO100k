@@ -19,6 +19,7 @@ def run_one_session(
     session_index: int,
     seed_offset: int,
 ) -> tuple[float, int, str]:
+
     real_index = session_index + seed_offset
 
     rng = ProvablyFairRng(
@@ -27,13 +28,22 @@ def run_one_session(
     )
 
     engine = LimboEngine(rng=rng)
-    agent = build_agent(strategy, stake, multiplier, fraction)
+
+    agent = build_agent(
+        strategy,
+        stake,
+        multiplier,
+        fraction,
+    )
 
     capital = initial_capital
+
     completed_rounds = 0
+
     reason = "round_limit"
 
     for _ in range(rounds):
+
         if capital <= 0:
             reason = "capital_floor"
             break
@@ -48,17 +58,30 @@ def run_one_session(
             reason = "no_amount"
             break
 
-        result = engine.play(stake=amount, target_multiplier=target)
+        result = engine.play(
+            stake=amount,
+            target_multiplier=target,
+        )
+
         capital += result.profit
+
         completed_rounds += 1
 
         if hasattr(agent, "observe"):
-            agent.observe(result.won, capital)
+            agent.observe(
+                result.won,
+                capital,
+            )
 
-    return round(capital, 2), completed_rounds, reason
+    return (
+        round(capital, 2),
+        completed_rounds,
+        reason,
+    )
 
 
 def main() -> None:
+
     parser = argparse.ArgumentParser(
         description="Run autonomous LIMBO100k simulations"
     )
@@ -78,29 +101,74 @@ def main() -> None:
             "momentum_phase",
             "density_phase",
             "phase_state",
+            "phase_state_v2",
         ],
     )
 
-    parser.add_argument("--sessions", type=int, default=1000)
-    parser.add_argument("--initial-capital", type=float, default=50.0)
-    parser.add_argument("--target-capital", type=float, default=100000.0)
-    parser.add_argument("--stake", type=float, default=1.0)
-    parser.add_argument("--multiplier", type=float, default=5.0)
-    parser.add_argument("--risk-fraction", type=float, default=0.18)
-    parser.add_argument("--rounds", type=int, default=5000)
-    parser.add_argument("--seed-offset", type=int, default=0)
+    parser.add_argument(
+        "--sessions",
+        type=int,
+        default=1000,
+    )
+
+    parser.add_argument(
+        "--initial-capital",
+        type=float,
+        default=50.0,
+    )
+
+    parser.add_argument(
+        "--target-capital",
+        type=float,
+        default=100000.0,
+    )
+
+    parser.add_argument(
+        "--stake",
+        type=float,
+        default=1.0,
+    )
+
+    parser.add_argument(
+        "--multiplier",
+        type=float,
+        default=5.0,
+    )
+
+    parser.add_argument(
+        "--risk-fraction",
+        type=float,
+        default=0.18,
+    )
+
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=5000,
+    )
+
+    parser.add_argument(
+        "--seed-offset",
+        type=int,
+        default=0,
+    )
 
     args = parser.parse_args()
 
     final_values = []
+
     round_counts = []
+
     objective_count = 0
     floor_count = 0
+
     best_value = float("-inf")
     worst_value = float("inf")
+
     best_index = 0
 
     for index in range(args.sessions):
+
         final_capital, completed_rounds, reason = run_one_session(
             strategy=args.strategy,
             initial_capital=args.initial_capital,
@@ -114,6 +182,7 @@ def main() -> None:
         )
 
         final_values.append(final_capital)
+
         round_counts.append(completed_rounds)
 
         if reason == "objective_reached":
@@ -124,23 +193,67 @@ def main() -> None:
 
         if final_capital > best_value:
             best_value = final_capital
-            best_index = index + args.seed_offset
+            best_index = (
+                index
+                + args.seed_offset
+            )
 
         if final_capital < worst_value:
             worst_value = final_capital
 
     print("\n=== LIMBO100k Free Agent Batch ===")
+
     print(f"Strategy: {args.strategy}")
-    print(f"Sessions: {args.sessions}")
-    print(f"Seed offset: {args.seed_offset}")
-    print(f"Average final capital: {round(mean(final_values), 2)} €")
-    print(f"Median final capital: {round(median(final_values), 2)} €")
-    print(f"Objective rate: {round((objective_count / args.sessions) * 100, 4)} %")
-    print(f"Capital floor rate: {round((floor_count / args.sessions) * 100, 4)} %")
-    print(f"Best session: {round(best_value, 2)} €")
-    print(f"Best session index: {best_index}")
-    print(f"Worst session: {round(worst_value, 2)} €")
-    print(f"Average rounds: {round(mean(round_counts), 2)}")
+
+    print(
+        f"Sessions: "
+        f"{args.sessions}"
+    )
+
+    print(
+        f"Seed offset: "
+        f"{args.seed_offset}"
+    )
+
+    print(
+        f"Average final capital: "
+        f"{round(mean(final_values), 2)} €"
+    )
+
+    print(
+        f"Median final capital: "
+        f"{round(median(final_values), 2)} €"
+    )
+
+    print(
+        f"Objective rate: "
+        f"{round((objective_count / args.sessions) * 100, 4)} %"
+    )
+
+    print(
+        f"Capital floor rate: "
+        f"{round((floor_count / args.sessions) * 100, 4)} %"
+    )
+
+    print(
+        f"Best session: "
+        f"{round(best_value, 2)} €"
+    )
+
+    print(
+        f"Best session index: "
+        f"{best_index}"
+    )
+
+    print(
+        f"Worst session: "
+        f"{round(worst_value, 2)} €"
+    )
+
+    print(
+        f"Average rounds: "
+        f"{round(mean(round_counts), 2)}"
+    )
 
 
 if __name__ == "__main__":
