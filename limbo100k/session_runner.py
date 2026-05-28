@@ -288,5 +288,3 @@ def run_strategy_session(
         stop_reason=stop_reason,
         history=history,
     )
-        history=history,
-    )
