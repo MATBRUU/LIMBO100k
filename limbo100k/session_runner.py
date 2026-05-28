@@ -11,6 +11,7 @@ from limbo100k.agents.meta_phase_agent import MetaPhaseAgent
 from limbo100k.agents.momentum_phase_agent import MomentumPhaseAgent
 from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.agents.phase_agent import PhaseAgent
+from limbo100k.agents.phase_state_agent import PhaseStateAgent
 from limbo100k.agents.temporal_agent import TemporalAgent
 
 from limbo100k.engine.limbo_engine import LimboEngine
@@ -108,6 +109,13 @@ def build_agent(
             minimum_stake=0.1,
         )
 
+    if strategy == "phase_state":
+        return PhaseStateAgent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     raise ValueError(f"Unknown strategy: {strategy}")
 
 
@@ -145,6 +153,7 @@ def run_strategy_session(
     )
 
     capital = initial_capital
+
     peak_capital = capital
     lowest_capital = capital
 
@@ -159,6 +168,7 @@ def run_strategy_session(
     for round_number in range(1, max_rounds + 1):
 
         if use_policy:
+
             should_stop, reason = policy.evaluate(
                 initial_capital=initial_capital,
                 current_capital=capital,
@@ -178,7 +188,9 @@ def run_strategy_session(
             stop_reason = "objective_reached"
             break
 
-        exposure, selected_multiplier = agent.next_bet(capital)
+        exposure, selected_multiplier = agent.next_bet(
+            capital
+        )
 
         if exposure <= 0:
             stop_reason = "no_exposure"
@@ -191,11 +203,21 @@ def run_strategy_session(
 
         capital += result.profit
 
-        peak_capital = max(peak_capital, capital)
-        lowest_capital = min(lowest_capital, capital)
+        peak_capital = max(
+            peak_capital,
+            capital,
+        )
+
+        lowest_capital = min(
+            lowest_capital,
+            capital,
+        )
 
         if hasattr(agent, "observe"):
-            agent.observe(result.won, capital)
+            agent.observe(
+                result.won,
+                capital,
+            )
 
         if result.won:
             positive_rounds += 1
@@ -223,14 +245,22 @@ def run_strategy_session(
                     if result.won
                     else "failure"
                 ),
-                "profit": round(result.profit, 2),
-                "capital": round(capital, 2),
+                "profit": round(
+                    result.profit,
+                    2,
+                ),
+                "capital": round(
+                    capital,
+                    2,
+                ),
                 "negative_sequence": negative_sequence,
                 "drawdown_from_peak": round(
                     peak_capital - capital,
                     2,
                 ),
-                "server_seed_hash": result.proof.server_seed_hash,
+                "server_seed_hash": (
+                    result.proof.server_seed_hash
+                ),
                 "digest": result.proof.digest,
             }
         )
@@ -241,7 +271,10 @@ def run_strategy_session(
         lowest_capital=round(lowest_capital, 2),
         positive_rounds=positive_rounds,
         negative_rounds=negative_rounds,
-        total_rounds=positive_rounds + negative_rounds,
+        total_rounds=(
+            positive_rounds
+            + negative_rounds
+        ),
         reached_target=capital >= target_capital,
         depleted=capital <= 0,
         stop_reason=stop_reason,
