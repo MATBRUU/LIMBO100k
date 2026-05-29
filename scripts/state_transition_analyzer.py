@@ -405,6 +405,7 @@ def main() -> None:
             "phase_state",
             "phase_state_v2",
             "phase_state_v21",
+            "phase_state_v22",
         ],
     )
 
