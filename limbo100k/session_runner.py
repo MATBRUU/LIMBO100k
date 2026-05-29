@@ -14,6 +14,7 @@ from limbo100k.agents.phase_agent import PhaseAgent
 from limbo100k.agents.phase_state_agent import PhaseStateAgent
 from limbo100k.agents.phase_state_v2_agent import PhaseStateV2Agent
 from limbo100k.agents.phase_state_v21_agent import PhaseStateV21Agent
+from limbo100k.agents.phase_state_v22_agent import PhaseStateV22Agent
 from limbo100k.agents.temporal_agent import TemporalAgent
 
 from limbo100k.engine.limbo_engine import LimboEngine
@@ -127,6 +128,13 @@ def build_agent(
 
     if strategy == "phase_state_v21":
         return PhaseStateV21Agent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
+    if strategy == "phase_state_v22":
+        return PhaseStateV22Agent(
             base_fraction=risk_fraction,
             base_multiplier=target_multiplier,
             minimum_stake=0.1,
