@@ -13,6 +13,7 @@ from limbo100k.agents.percentage_risk_agent import PercentageRiskAgent
 from limbo100k.agents.phase_agent import PhaseAgent
 from limbo100k.agents.phase_state_agent import PhaseStateAgent
 from limbo100k.agents.phase_state_v2_agent import PhaseStateV2Agent
+from limbo100k.agents.phase_state_v21_agent import PhaseStateV21Agent
 from limbo100k.agents.temporal_agent import TemporalAgent
 
 from limbo100k.engine.limbo_engine import LimboEngine
@@ -124,167 +125,11 @@ def build_agent(
             minimum_stake=0.1,
         )
 
+    if strategy == "phase_state_v21":
+        return PhaseStateV21Agent(
+            base_fraction=risk_fraction,
+            base_multiplier=target_multiplier,
+            minimum_stake=0.1,
+        )
+
     raise ValueError(f"Unknown strategy: {strategy}")
-
-
-def run_strategy_session(
-    strategy: str,
-    initial_capital: float,
-    target_capital: float,
-    stake: float,
-    target_multiplier: float,
-    risk_fraction: float,
-    max_rounds: int,
-    server_seed: str,
-    client_seed: str,
-    house_edge: float = 0.99,
-    use_policy: bool = True,
-) -> SessionSummary:
-
-    rng = ProvablyFairRng(
-        server_seed=server_seed,
-        client_seed=client_seed,
-    )
-
-    engine = LimboEngine(
-        rng=rng,
-        house_edge=house_edge,
-    )
-
-    policy = SessionPolicy()
-
-    agent = build_agent(
-        strategy,
-        stake,
-        target_multiplier,
-        risk_fraction,
-    )
-
-    capital = initial_capital
-
-    peak_capital = capital
-    lowest_capital = capital
-
-    positive_rounds = 0
-    negative_rounds = 0
-    negative_sequence = 0
-
-    stop_reason = "max_rounds"
-
-    history: list[dict] = []
-
-    for round_number in range(1, max_rounds + 1):
-
-        if use_policy:
-
-            should_stop, reason = policy.evaluate(
-                initial_capital=initial_capital,
-                current_capital=capital,
-                peak_capital=peak_capital,
-                negative_sequence=negative_sequence,
-            )
-
-            if should_stop:
-                stop_reason = reason
-                break
-
-        if capital <= 0:
-            stop_reason = "capital_floor"
-            break
-
-        if capital >= target_capital:
-            stop_reason = "objective_reached"
-            break
-
-        exposure, selected_multiplier = agent.next_bet(
-            capital
-        )
-
-        if exposure <= 0:
-            stop_reason = "no_exposure"
-            break
-
-        result = engine.play(
-            stake=exposure,
-            target_multiplier=selected_multiplier,
-        )
-
-        capital += result.profit
-
-        peak_capital = max(
-            peak_capital,
-            capital,
-        )
-
-        lowest_capital = min(
-            lowest_capital,
-            capital,
-        )
-
-        if hasattr(agent, "observe"):
-            agent.observe(
-                result.won,
-                capital,
-            )
-
-        if result.won:
-            positive_rounds += 1
-            negative_sequence = 0
-        else:
-            negative_rounds += 1
-            negative_sequence += 1
-
-        history.append(
-            {
-                "round": round_number,
-                "strategy": strategy,
-                "nonce": result.nonce,
-                "stake": round(exposure, 2),
-                "target_multiplier": round(
-                    result.target_multiplier,
-                    4,
-                ),
-                "rolled_multiplier": round(
-                    result.rolled_multiplier,
-                    4,
-                ),
-                "outcome": (
-                    "success"
-                    if result.won
-                    else "failure"
-                ),
-                "profit": round(
-                    result.profit,
-                    2,
-                ),
-                "capital": round(
-                    capital,
-                    2,
-                ),
-                "negative_sequence": negative_sequence,
-                "drawdown_from_peak": round(
-                    peak_capital - capital,
-                    2,
-                ),
-                "server_seed_hash": (
-                    result.proof.server_seed_hash
-                ),
-                "digest": result.proof.digest,
-            }
-        )
-
-    return SessionSummary(
-        final_capital=round(capital, 2),
-        peak_capital=round(peak_capital, 2),
-        lowest_capital=round(lowest_capital, 2),
-        positive_rounds=positive_rounds,
-        negative_rounds=negative_rounds,
-        total_rounds=(
-            positive_rounds
-            + negative_rounds
-        ),
-        reached_target=capital >= target_capital,
-        depleted=capital <= 0,
-        stop_reason=stop_reason,
-        history=history,
-    )
