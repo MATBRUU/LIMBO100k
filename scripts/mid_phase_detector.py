@@ -7,7 +7,6 @@ from statistics import mean, median
 
 
 def to_float(value):
-
     if value in ("", "None", None):
         return None
 
@@ -17,51 +16,97 @@ def to_float(value):
         return None
 
 
-def summarize(label, rows):
+def get_value(row, *names):
+    for name in names:
+        if name in row:
+            return row.get(name)
+    return None
 
+
+def safe_mean(values):
+    clean = [v for v in values if v is not None]
+    if not clean:
+        return None
+    return round(mean(clean), 2)
+
+
+def safe_median(values):
+    clean = [v for v in values if v is not None]
+    if not clean:
+        return None
+    return round(median(clean), 2)
+
+
+def summarize(label, rows):
     if not rows:
+        print(f"{label}: count=0")
         return
 
-    d1k10k = [
-        r["d1k10k"]
-        for r in rows
-        if r["d1k10k"] is not None
-    ]
-
-    d10k25k = [
-        r["d10k25k"]
-        for r in rows
-        if r["d10k25k"] is not None
-    ]
-
-    drawdowns = [
-        r["drawdown"]
-        for r in rows
-        if r["drawdown"] is not None
-    ]
-
-    momentum25 = [
-        r["momentum25"]
-        for r in rows
-        if r["momentum25"] is not None
-    ]
+    d1k10k = [r["d1k10k"] for r in rows if r["d1k10k"] is not None]
+    d10k25k = [r["d10k25k"] for r in rows if r["d10k25k"] is not None]
+    drawdowns = [r["drawdown"] for r in rows if r["drawdown"] is not None]
+    momentum25 = [r["momentum25"] for r in rows if r["momentum25"] is not None]
 
     print(
         f"{label}: "
         f"count={len(rows)} | "
-        f"avg_d1k10k={round(mean(d1k10k),2) if d1k10k else None} | "
-        f"median_d1k10k={round(median(d1k10k),2) if d1k10k else None} | "
-        f"avg_d10k25k={round(mean(d10k25k),2) if d10k25k else None} | "
-        f"median_d10k25k={round(median(d10k25k),2) if d10k25k else None} | "
-        f"avg_dd={round(mean(drawdowns),2) if drawdowns else None} | "
-        f"median_dd={round(median(drawdowns),2) if drawdowns else None} | "
-        f"avg_momentum25={round(mean(momentum25),2) if momentum25 else None} | "
-        f"median_momentum25={round(median(momentum25),2) if momentum25 else None}"
+        f"with_d1k10k={len(d1k10k)} | "
+        f"with_d10k25k={len(d10k25k)} | "
+        f"with_momentum25={len(momentum25)} | "
+        f"avg_d1k10k={safe_mean(d1k10k)} | "
+        f"median_d1k10k={safe_median(d1k10k)} | "
+        f"avg_d10k25k={safe_mean(d10k25k)} | "
+        f"median_d10k25k={safe_median(d10k25k)} | "
+        f"avg_dd={safe_mean(drawdowns)} | "
+        f"median_dd={safe_median(drawdowns)} | "
+        f"avg_momentum25={safe_mean(momentum25)} | "
+        f"median_momentum25={safe_median(momentum25)}"
     )
 
 
-def main():
+def load_rows(path: Path):
+    winners = []
+    breakouts = []
+    near_misses = []
 
+    with path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+
+        print("\nDetected CSV columns:")
+        print(reader.fieldnames)
+
+        for row in reader:
+            profile = row.get("profile")
+
+            cleaned = {
+                "profile": profile,
+                "d1k10k": to_float(
+                    get_value(row, "d1k10k", "d_1k_10k")
+                ),
+                "d10k25k": to_float(
+                    get_value(row, "d10k25k", "d_10k_25k")
+                ),
+                "drawdown": to_float(
+                    get_value(row, "max_drawdown", "drawdown", "dd")
+                ),
+                "momentum25": to_float(
+                    get_value(row, "momentum25", "momentum_25")
+                ),
+            }
+
+            if profile == "winner":
+                winners.append(cleaned)
+
+            elif profile == "breakout":
+                breakouts.append(cleaned)
+
+            elif profile in {"near_miss_high", "near_miss_mid"}:
+                near_misses.append(cleaned)
+
+    return winners, breakouts, near_misses
+
+
+def main():
     parser = argparse.ArgumentParser(
         description="Winner vs Breakout Mid Phase Analysis"
     )
@@ -75,76 +120,32 @@ def main():
 
     path = Path(args.input)
 
-    winners = []
-    breakouts = []
+    winners, breakouts, near_misses = load_rows(path)
 
-    with path.open(
-        "r",
-        encoding="utf-8",
-        newline="",
-    ) as file:
+    print("\n=== LIMBO100k Mid Phase Detector ===")
 
-        reader = csv.DictReader(file)
-
-        for row in reader:
-
-            profile = row["profile"]
-
-            cleaned = {
-                "d1k10k": to_float(
-                    row.get("d1k10k")
-                ),
-                "d10k25k": to_float(
-                    row.get("d10k25k")
-                ),
-                "drawdown": to_float(
-                    row.get("max_drawdown")
-                ),
-                "momentum25": to_float(
-                    row.get("momentum25")
-                ),
-            }
-
-            if profile == "winner":
-                winners.append(cleaned)
-
-            elif profile == "breakout":
-                breakouts.append(cleaned)
-
-    print(
-        "\n=== LIMBO100k Mid Phase Detector ==="
-    )
-
-    summarize(
-        "WINNERS",
-        winners,
-    )
-
-    summarize(
-        "BREAKOUTS",
-        breakouts,
-    )
+    summarize("WINNERS", winners)
+    summarize("BREAKOUTS", breakouts)
+    summarize("NEAR_MISSES", near_misses)
 
     print("\nHypothesis check:")
 
-    if winners and breakouts:
+    winner_momentum = safe_mean([r["momentum25"] for r in winners])
+    breakout_momentum = safe_mean([r["momentum25"] for r in breakouts])
 
-        winner_momentum = mean(
-            r["momentum25"]
-            for r in winners
-            if r["momentum25"] is not None
-        )
+    winner_d10k25k = safe_mean([r["d10k25k"] for r in winners])
+    breakout_d10k25k = safe_mean([r["d10k25k"] for r in breakouts])
 
-        breakout_momentum = mean(
-            r["momentum25"]
-            for r in breakouts
-            if r["momentum25"] is not None
-        )
+    print(f"winner_avg_momentum25={winner_momentum}")
+    print(f"breakout_avg_momentum25={breakout_momentum}")
+    print(f"winner_avg_d10k25k={winner_d10k25k}")
+    print(f"breakout_avg_d10k25k={breakout_d10k25k}")
 
-        print(
-            f"Momentum ratio = "
-            f"{round(winner_momentum / breakout_momentum, 2)}x"
-        )
+    if winner_momentum is not None and breakout_momentum not in (None, 0):
+        print(f"momentum_ratio={round(winner_momentum / breakout_momentum, 2)}x")
+
+    if winner_d10k25k is not None and breakout_d10k25k not in (None, 0):
+        print(f"d10k25k_ratio={round(winner_d10k25k / breakout_d10k25k, 2)}x")
 
 
 if __name__ == "__main__":
